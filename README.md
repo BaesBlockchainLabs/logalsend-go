@@ -381,7 +381,7 @@ set -a; . ./.env; set +a
 
 ## The `lgtsend` command
 
-`go/cmd/lgtsend` is a small CLI that submits a shipment, polls it, and builds
+`cmd/lgtsend` is a small CLI that submits a shipment, polls it, and builds
 signer URLs. It doubles as a worked example and as a way to reproduce a problem
 for Logalty support.
 
@@ -504,11 +504,10 @@ for a credential.
 ## Layout
 
 ```
-go/
-  saml/           assertion building, config, keystore loading, URL encoding
-  xmldsig/        Canonical XML 1.0 and enveloped RSA-SHA1 signing
-  wsdatachannel/  SOAP client, 25 operations, types and enums
-  cmd/lgtsend/    CLI: submit a shipment, poll it, build signer URLs
+saml/             assertion building, config, keystore loading, URL encoding
+xmldsig/          Canonical XML 1.0 and enveloped RSA-SHA1 signing
+wsdatachannel/    SOAP client, 25 operations, types and enums
+cmd/lgtsend/      CLI: submit a shipment, poll it, build signer URLs
 oracle/
   run.sh          rebuilds the Java harness and regenerates every golden
   SamlRef.java    generates a reference assertion with the Java SDK
@@ -518,7 +517,7 @@ java-sdk/         Logalty's own SDK, unzipped — NOT in this repository
 .env              your credentials — gitignored, see .env.example
 ```
 
-The module path is `github.com/BaesBlockchainLabs/logalsend-go`; change it in `go/go.mod` if you
+The module path is `github.com/BaesBlockchainLabs/logalsend-go`; change it in `go.mod` if you
 publish this somewhere else.
 
 ## Licence
@@ -528,5 +527,5 @@ conditions attached.
 
 That covers the Go code in this repository and nothing else. It does **not**
 cover Logalty's own Java SDK, which is not distributed here, nor the test
-keystore under `go/saml/testdata`, which is Logalty's and is explained in the
+keystore under `saml/testdata`, which is Logalty's and is explained in the
 README beside it.

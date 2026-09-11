@@ -4,13 +4,13 @@
 !.env.example
 
 # Keystores and keys. The only .pfx that belongs in the repo is the vendor's
-# own throwaway test certificate under go/saml/testdata, which the golden tests
+# own throwaway test certificate under saml/testdata, which the golden tests
 # need; it is force-included below.
 *.pfx
 *.p12
 *.pem
 *.key
-!go/saml/testdata/test-logalty-private.pfx
+!saml/testdata/test-logalty-private.pfx
 
 # Java build output and regenerated reference files. oracle/run.sh recreates
 # all of these; the goldens the Go tests actually read live in testdata and are

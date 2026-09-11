@@ -37,7 +37,7 @@ javac -nowarn -encoding UTF-8 -cp "$cp" -d "$classes" \
 
 # --- SAML -------------------------------------------------------------------
 # The signed assertion is regenerated but NOT copied over the frozen golden in
-# go/xmldsig/testdata: its timestamps change on every run, and the golden's
+# xmldsig/testdata: its timestamps change on every run, and the golden's
 # value is that its DigestValue and SignatureValue were computed by Santuario
 # for that exact document.
 echo "==> generating a reference SAML assertion"
@@ -54,7 +54,7 @@ java -cp "$cp" SamlVerify oracle/go-signed.xml 2>/dev/null
 # --- SOAP -------------------------------------------------------------------
 echo "==> capturing SOAP requests from the Axis stubs"
 java -cp "$cp" SoapCapture "$captured" 2>/dev/null | sed 's/^/    /'
-cp "$captured"/*.xml go/wsdatachannel/testdata/
+cp "$captured"/*.xml wsdatachannel/testdata/
 
 echo "==> running the Go test suite"
 (cd go && go test ./...)
