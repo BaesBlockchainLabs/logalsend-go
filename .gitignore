@@ -1,0 +1,40 @@
+# Credentials. .env.example is the committed template; .env never is.
+.env
+.env.*
+!.env.example
+
+# Keystores and keys. The only .pfx that belongs in the repo is the vendor's
+# own throwaway test certificate under go/saml/testdata, which the golden tests
+# need; it is force-included below.
+*.pfx
+*.p12
+*.pem
+*.key
+!go/saml/testdata/test-logalty-private.pfx
+
+# Java build output and regenerated reference files. oracle/run.sh recreates
+# all of these; the goldens the Go tests actually read live in testdata and are
+# committed.
+oracle/classes/
+oracle/captured/
+oracle/ref-raw.xml
+oracle/go-signed.xml
+oracle/cp.txt
+oracle/*.err
+
+# Logalty's own SDK, which this repository does not redistribute: it ships
+# without a licence, so it is not ours to publish. oracle/run.sh needs it, so
+# unzip lgtweb-sdk-full-dependencies-3.9.0.zip into java-sdk/ after cloning.
+# You can get it from Logalty's integration portal.
+java-sdk/
+
+# Go
+*.test
+*.out
+/lgtsend
+
+# Editors and OS
+.DS_Store
+.idea/
+*.swp
+.claude/settings.local.json

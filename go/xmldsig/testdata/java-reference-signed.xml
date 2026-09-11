@@ -1,0 +1,101 @@
+<saml:Assertion xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="ass00000000002" IssueInstant="2026-09-11T18:33:02.552+02:00" Version="2.0">
+  <saml:Issuer>www.logalty.es</saml:Issuer>
+  <saml:Subject>
+    <saml:NameID Format="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"/>
+    <saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">
+      <saml:SubjectConfirmationData NotOnOrAfter="2026-09-11T19:03:02.579+02:00" Recipient="www.logalty.es"/>
+    </saml:SubjectConfirmation>
+  </saml:Subject>
+  <saml:Conditions>
+    <saml:AudienceRestriction>
+      <saml:Audience>www.logalty.es</saml:Audience>
+    </saml:AudienceRestriction>
+  </saml:Conditions>
+  <saml:AuthnStatement AuthnInstant="2026-09-11T18:33:02.583+02:00">
+    <saml:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</saml:AuthnContextClassRef>
+    <saml:AuthnContext/>
+  </saml:AuthnStatement>
+  <saml:AttributeStatement>
+    <saml:Attribute Name="urn:logalty:schemas:core:1.0:attributes:login" NameFormat="urn:oasis:names:tc:SAML:2.0:attrnameformat:basic">
+      <saml:AttributeValue>jaumepallares</saml:AttributeValue>
+    </saml:Attribute>
+    <saml:Attribute Name="urn:logalty:schemas:core:1.0:attributes:password" NameFormat="urn:oasis:names:tc:SAML:2.0:attrnameformat:basic">
+      <saml:AttributeValue>1a35d9##</saml:AttributeValue>
+    </saml:Attribute>
+    <saml:Attribute Name="urn:logalty:schemas:core:1.0:attributes:email" NameFormat="urn:oasis:names:tc:SAML:2.0:attrnameformat:basic">
+      <saml:AttributeValue>example@logalty.com</saml:AttributeValue>
+    </saml:Attribute>
+    <saml:Attribute Name="urn:logalty:schemas:core:1.0:attributes:fullname" NameFormat="urn:oasis:names:tc:SAML:2.0:attrnameformat:basic">
+      <saml:AttributeValue>Jaume Pallares</saml:AttributeValue>
+    </saml:Attribute>
+    <saml:Attribute Name="urn:logalty:schemas:core:1.0:attributes:rol" NameFormat="urn:oasis:names:tc:SAML:2.0:attrnameformat:basic">
+      <saml:AttributeValue>Administrator</saml:AttributeValue>
+    </saml:Attribute>
+    <saml:Attribute Name="urn:logalty:schemas:core:1.0:attributes:group" NameFormat="urn:oasis:names:tc:SAML:2.0:attrnameformat:basic">
+      <saml:AttributeValue>1</saml:AttributeValue>
+    </saml:Attribute>
+    <saml:Attribute Name="urn:logalty:schemas:core:1.0:attributes:companies" NameFormat="urn:oasis:names:tc:SAML:2.0:attrnameformat:basic">
+      <saml:AttributeValue>311</saml:AttributeValue>
+    </saml:Attribute>
+    <saml:Attribute Name="urn:logalty:schemas:core:1.0:attributes:position" NameFormat="urn:oasis:names:tc:SAML:2.0:attrnameformat:basic">
+      <saml:AttributeValue>position</saml:AttributeValue>
+    </saml:Attribute>
+    <saml:Attribute Name="urn:logalty:schemas:core:1.0:attributes:emailsAlerts" NameFormat="urn:oasis:names:tc:SAML:2.0:attrnameformat:basic">
+      <saml:AttributeValue>true</saml:AttributeValue>
+    </saml:Attribute>
+    <saml:Attribute Name="urn:logalty:schemas:core:1.0:attributes:readersGroup" NameFormat="urn:oasis:names:tc:SAML:2.0:attrnameformat:basic">
+      <saml:AttributeValue>1;2</saml:AttributeValue>
+    </saml:Attribute>
+  </saml:AttributeStatement>
+<Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns="http://www.w3.org/2000/09/xmldsig#">
+<SignedInfo>
+<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+<ds:Reference URI="">
+<ds:Transforms>
+<ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+</ds:Transforms>
+<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+<ds:DigestValue>1ZjsyIcYazpv5UgJgdI6a4IszZ0=</ds:DigestValue>
+</ds:Reference>
+</SignedInfo>
+<SignatureValue>
+DdnJxLQcrYRTDqf3RkcEZ1ONTP891wzSvDuyHqWAQ+1iG2SfzJgUcGaycwM3EkWicpB+UzqzQz1t&#13;
+8Zi1jvlSrwxeAAoJz4nsPsk1mhAHanK9g1Zr5/IOvSdzssMY2qvRCAKXpGgWENNpNiVoUMIGq7Gc&#13;
+ESrOC2lGoIMuMMre0yXEklqYkurEjg+z+EeiGuhX182OemKsZcprgtJoKuQdLO3KSE+XZP8u8vb/&#13;
+xJbMpZB2lrABBwEZ7lH5YMw3PbFSXf2B3DRkE/M6k/7Vdu+Dt6e7WhRCbv68B+zhXQooLh6tF25z&#13;
+YIwGUmuGeOH80l4FMbVpvyUjrtFENgPhfBIEOQ==
+</SignatureValue>
+<ds:KeyInfo>
+<ds:X509Data>
+<ds:X509Certificate>
+MIIDVjCCAj6gAwIBAgIEUSSGejANBgkqhkiG9w0BAQUFADBtMQswCQYDVQQGEwJFUzESMBAGA1UE&#13;
+CBMJQmFyY2Vsb25hMRIwEAYDVQQHEwlCYXJjZWxvbmExEDAOBgNVBAoTB0xvZ2FsdHkxDTALBgNV&#13;
+BAsTBFRlc3QxFTATBgNVBAMTDFRlc3QgTG9nYWx0eTAeFw0xMzAyMjAwODE2NThaFw0yMjEyMzAw&#13;
+ODE2NThaMG0xCzAJBgNVBAYTAkVTMRIwEAYDVQQIEwlCYXJjZWxvbmExEjAQBgNVBAcTCUJhcmNl&#13;
+bG9uYTEQMA4GA1UEChMHTG9nYWx0eTENMAsGA1UECxMEVGVzdDEVMBMGA1UEAxMMVGVzdCBMb2dh&#13;
+bHR5MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1Mj6wJBgY4lM3HUzQzSPsPCqFP66&#13;
+2J5OfRnYI/t9aygifu2UrbBePXPMFh/ZTjj/X+Up+v7MpqkXYSyyDxG/uKUz0WkvSJ4ZQP8MALCg&#13;
+BoKAEXJcwaAo3A69BBMACvE1w7EveAT+uh7zUxpgJOQR9wdmecops2nawTJpAuqjMc7Rj7o12q+c&#13;
+lXJ+Gec/fMyAKxGpimSzQLZZ72/NeicJ/wKcFfW4YA4mdvcQ2uNCHVItTZxaUZv2sSJxcKRrMeNg&#13;
+z9Gp5hsuVtswF0ePSn4/I3afF5fGM6Ish+J0mT90uKjVWSiXJAcMxvUmJO1EGQjfXa6sr6nLuvP+&#13;
+B332e5OK9QIDAQABMA0GCSqGSIb3DQEBBQUAA4IBAQDSbq8M7/EswV5yQwWjV3VNR3DBgB9IJbjs&#13;
+OIZ43HLTFUuvl64JncdrMeg0kSiEiJG5hRyaaO4H2HFqcJOdIBQRCxMnIoEhUpah9Zc6mXD9jAZW&#13;
+P3RJpMAFZUJaamUEFucMZ3Z/5Rjs71MZpC9H5yKQlnMa83hoFSmGWA4Z1FljC70lAHj4cQC95r2g&#13;
+56pOZMpHUxnRhkuKipSP3+oIovnaDvqdsPKf5hTZG+ZSOw4Tlg7ZTObutWEST89HyKGSVPemqHa3&#13;
+tSqbUrEIvfMHdGauzXKdtpZHUE6+EFtWBqwuPH7wpT3JgH2FSfrWZB9x9j9btWSiqbGw5aui2eYw&#13;
+WwEA
+</ds:X509Certificate>
+</ds:X509Data>
+<ds:KeyValue>
+<ds:RSAKeyValue>
+<ds:Modulus>1Mj6wJBgY4lM3HUzQzSPsPCqFP662J5OfRnYI/t9aygifu2UrbBePXPMFh/ZTjj/X+Up+v7MpqkX&#13;
+YSyyDxG/uKUz0WkvSJ4ZQP8MALCgBoKAEXJcwaAo3A69BBMACvE1w7EveAT+uh7zUxpgJOQR9wdm&#13;
+ecops2nawTJpAuqjMc7Rj7o12q+clXJ+Gec/fMyAKxGpimSzQLZZ72/NeicJ/wKcFfW4YA4mdvcQ&#13;
+2uNCHVItTZxaUZv2sSJxcKRrMeNgz9Gp5hsuVtswF0ePSn4/I3afF5fGM6Ish+J0mT90uKjVWSiX&#13;
+JAcMxvUmJO1EGQjfXa6sr6nLuvP+B332e5OK9Q==</ds:Modulus>
+<ds:Exponent>AQAB</ds:Exponent>
+</ds:RSAKeyValue>
+</ds:KeyValue>
+</ds:KeyInfo>
+</Signature></saml:Assertion>
