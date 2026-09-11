@@ -520,3 +520,13 @@ java-sdk/         Logalty's own SDK, unzipped — NOT in this repository
 
 The module path is `github.com/BaesBlockchainLabs/logalsend-go`; change it in `go/go.mod` if you
 publish this somewhere else.
+
+## Licence
+
+[0BSD](LICENSE) — use it for anything, with or without attribution, with no
+conditions attached.
+
+That covers the Go code in this repository and nothing else. It does **not**
+cover Logalty's own Java SDK, which is not distributed here, nor the test
+keystore under `go/saml/testdata`, which is Logalty's and is explained in the
+README beside it.
