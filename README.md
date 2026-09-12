@@ -507,7 +507,7 @@ the empirical way to find out how far a shipment got and what kind of flow it
 was: a signed document exists only if something was signed.
 
 ```sh
-go run ./cmd/lgtsend -download 001002-9996-000000000050255.par -out ./downloads
+go run ./cmd/lgtsend -download 001001-9996-000000000000001.par -out ./downloads
 ```
 
 Downloaded certificates can contain the receiver's real personal data — name,
