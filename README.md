@@ -237,7 +237,11 @@ creating a shipment type.
 
 **For signing a document you want `Contratación`.** It is the only service on the
 list that produces a signed document, which is what `ShippingDocumentSigned`
-exists to return.
+exists to return. The integration guide corroborates this from the other
+direction: its sections on the synchronous send are titled *"sólo
+contratación"*, so `ShippingSynchronousSend` and
+`ShippingSynchronousSendWTemplate` only work for this service. If a synchronous
+send is rejected, the shipment type is the first thing to check.
 
 | Servicio | Produces | Download it with |
 |---|---|---|
