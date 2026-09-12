@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/beevik/etree"
 	"github.com/BaesBlockchainLabs/logalsend-go/xmldsig"
+	"github.com/beevik/etree"
 )
 
 // fixedTime pins the assertion timestamps so generated documents are

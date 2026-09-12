@@ -47,8 +47,8 @@ java -cp "$cp" SamlRef \
 echo "    wrote oracle/ref-raw.xml"
 
 echo "==> verifying the Go-generated assertion with Apache Santuario"
-(cd go && LOGALTY_WRITE_GOLDEN="$root/oracle/go-signed.xml" \
-    go test ./saml/ -run TestWriteGoldenForJava -count=1 >/dev/null)
+LOGALTY_WRITE_GOLDEN="$root/oracle/go-signed.xml" \
+    go test ./saml/ -run TestWriteGoldenForJava -count=1 >/dev/null
 java -cp "$cp" SamlVerify oracle/go-signed.xml 2>/dev/null
 
 # --- SOAP -------------------------------------------------------------------
@@ -57,4 +57,4 @@ java -cp "$cp" SoapCapture "$captured" 2>/dev/null | sed 's/^/    /'
 cp "$captured"/*.xml wsdatachannel/testdata/
 
 echo "==> running the Go test suite"
-(cd go && go test ./...)
+go test ./...
