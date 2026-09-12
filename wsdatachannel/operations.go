@@ -19,6 +19,8 @@ type SendRequest struct {
 	// FileName is the file name shown to the receiver, with extension.
 	FileName string
 	// FileContent is the document, base64-encoded. Use EncodeContent.
+	//
+	// A PDF must not be an AcroForm — the portal rejects those.
 	FileContent string
 
 	// Language selects the portal's UI language for the signer, as a full
@@ -42,8 +44,12 @@ func (r SendRequest) params(includeLanguage bool) []param {
 }
 
 // ShippingSend queues a shipment and returns as soon as the portal has accepted
-// it. The receivers are notified by the portal; poll ShippingStatus to follow
-// what happens next.
+// it. The receivers are notified by the portal; poll ShippingStatusUTC to
+// follow what happens next.
+//
+// Deprecated: the integration guide marks shippingSend as deprecated and says
+// it may be withdrawn. Use ShippingSendMultiReceiver, which covers the
+// single-receiver case too.
 func (c *Client) ShippingSend(ctx context.Context, req SendRequest) (RemmitanceResult, error) {
 	var out resultEnvelope[RemmitanceResult]
 	err := c.call(ctx, "shippingSend", req.params(false), &out)
@@ -53,6 +59,10 @@ func (c *Client) ShippingSend(ctx context.Context, req SendRequest) (RemmitanceR
 // ShippingSynchronousSend creates a shipment for a single receiver and returns
 // the URL to redirect them to immediately, rather than having the portal notify
 // them. Exactly one receiver is expected; only the first is sent.
+//
+// Deprecated: the integration guide marks shippingSynchronousSend as
+// deprecated and says using ShippingSynchronousSendMultiReceiver is mandatory,
+// since it covers every case.
 func (c *Client) ShippingSynchronousSend(ctx context.Context, req SendRequest) (SRemmitanceResult, error) {
 	var receiver any
 	if len(req.Receivers) > 0 {
@@ -78,11 +88,18 @@ type MultiReceiverSendRequest struct {
 	TypeID    string
 
 	Receivers []Receiver
-	Files     []BinaryContentItem
 
-	// SenderName is shown to the receivers as the originator.
+	// Files are the documents to sign. A PDF must not be an AcroForm.
+	Files []BinaryContentItem
+
+	// SenderName fills the "Enviado por" line of the notification email. It
+	// only applies when the shipment type notifies by email; left empty, the
+	// portal uses the company name.
 	SenderName string
-	// ExternalID is your own identifier for the whole shipment.
+	// ExternalID is your own identifier for the whole shipment — a customer
+	// reference, a case number, whatever you poll by later. For a multi-signer
+	// shipment this is the only place the portal reads it from; one set on a
+	// Receiver is ignored.
 	ExternalID string
 
 	// Subject is the subject line of the certified email. Used by
@@ -109,8 +126,13 @@ func (c *Client) ShippingSendMultiReceiver(ctx context.Context, req MultiReceive
 	return out.Value, err
 }
 
-// ShippingSynchronousSendMultiReceiver creates a multi-receiver shipment and
-// returns a sign-in URL per receiver instead of notifying them.
+// ShippingSynchronousSendMultiReceiver creates a shipment and returns a sign-in
+// URL per receiver instead of having the portal notify them. This is the
+// operation to reach for: it handles one receiver or many, and the
+// single-receiver variants are deprecated.
+//
+// It works **only** with a contract (contratación) shipment type. Any other
+// type is rejected with RetCodeTypeNotContract.
 func (c *Client) ShippingSynchronousSendMultiReceiver(ctx context.Context, req MultiReceiverSendRequest) ([]SMultiRemmitanceResult, error) {
 	var out resultEnvelope[[]SMultiRemmitanceResult]
 	err := c.call(ctx, "shippingSynchronousSendMultiReceiver", []param{

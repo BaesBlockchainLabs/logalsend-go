@@ -128,3 +128,38 @@ func (d DocumentState) Describe() string {
 func (d DocumentStateUTC) Describe() string {
 	return fmt.Sprintf("%s / %s", StatusName(d.Status), ResultName(d.Result))
 }
+
+// Send outcome codes, table 5.6 of the LogalSend integration guide (4.1.0).
+//
+// These are documented for the send operations. They are a different scale from
+// the shipment Result codes above, and not every operation uses this exact
+// table — shippingSend has been seen to answer 1 with the message "Validation
+// Request Error", which appears nowhere in it. Treat a code you do not
+// recognise as a failure and read Message.
+const (
+	RetCodeOK                 = 0   // Correcto
+	RetCodeLoginError         = 100 // Error login de usuario
+	RetCodeIPValidationError  = 110 // Error validando IP
+	RetCodeBadCompanyID       = 120 // Id de empresa incorrecto
+	RetCodeBadTypeID          = 121 // Id de tipo de envío incorrecto
+	RetCodeTypeNotContract    = 122 // El tipo de envío no es contratación
+	RetCodeBadReceiverData    = 130 // Error validando los datos del destinatario
+	RetCodeSaveError          = 140 // Error guardando el envío
+	RetCodeCoreForwardFailure = 150 // Error enviando a core
+)
+
+var retCodeNames = map[int]string{
+	RetCodeOK:                 "Correcto",
+	RetCodeLoginError:         "Error login de usuario",
+	RetCodeIPValidationError:  "Error validando IP",
+	RetCodeBadCompanyID:       "Id de empresa incorrecto",
+	RetCodeBadTypeID:          "Id de tipo de envío incorrecto",
+	RetCodeTypeNotContract:    "El tipo de envío no es contratación",
+	RetCodeBadReceiverData:    "Error validando los datos del destinatario",
+	RetCodeSaveError:          "Error guardando el envío",
+	RetCodeCoreForwardFailure: "Error enviando a core",
+}
+
+// RetCodeName returns the guide's wording for a send outcome code, or an empty
+// string for a code it does not document.
+func RetCodeName(retCode int) string { return retCodeNames[retCode] }

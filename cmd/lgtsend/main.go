@@ -67,6 +67,8 @@ type options struct {
 	mobile    string
 
 	externalID string
+	senderName string
+	subject    string
 	file       string
 	fileName   string
 	mimeType   string
@@ -113,6 +115,9 @@ func run() error {
 	flag.StringVar(&o.mobile, "mobile", "", "receiver's mobile, in +34... form")
 
 	flag.StringVar(&o.externalID, "external-id", "", "your own identifier for this shipment")
+	flag.StringVar(&o.senderName, "sender", "",
+		"name shown in the notification's \"Enviado por\" line (email shipment types only)")
+	flag.StringVar(&o.subject, "subject", "", "subject line of the certified email")
 	flag.StringVar(&o.file, "file", "", "path to the document to send")
 	flag.StringVar(&o.fileName, "file-name", "", "file name shown to the receiver (default: the file's base name)")
 	flag.StringVar(&o.mimeType, "mime", "application/pdf", "document MIME type")
@@ -445,29 +450,26 @@ func send(ctx context.Context, client *wsdatachannel.Client, o options) error {
 	describe(o, request)
 	fmt.Println()
 
+	outcome, err := dispatch(ctx, client, o, multiRequest(o, request))
+	if err != nil {
+		return err
+	}
+
 	var guid string
-	if o.sync {
-		result, err := client.ShippingSynchronousSend(ctx, request)
-		if err != nil {
-			return err
-		}
-		report(result.RemmitanceResult)
-		if err := result.Err(); err != nil {
-			return err
-		}
-		fmt.Println("\nSign-in URL for the receiver:")
-		fmt.Println(" ", result.URLSaml)
-		guid = firstGUID(result.RemmitanceResult)
-	} else {
-		result, err := client.ShippingSend(ctx, request)
-		if err != nil {
-			return err
-		}
+	for _, result := range outcome.results {
 		report(result)
 		if err := result.Err(); err != nil {
 			return err
 		}
-		guid = firstGUID(result)
+		if guid == "" {
+			guid = firstGUID(result)
+		}
+	}
+	if len(outcome.links) > 0 {
+		fmt.Println("\nSign-in URLs:")
+		for _, link := range outcome.links {
+			fmt.Printf("  %-14s %s\n", link.Receiver, link.URL)
+		}
 	}
 
 	if guid != "" && o.pollFor > 0 {
@@ -567,6 +569,71 @@ func describe(o options, request wsdatachannel.SendRequest) {
 	fmt.Println(indentXML(redactPassword(elideBase64(envelope))))
 }
 
+// multiRequest turns the flags into the request both send variants take.
+//
+// Only the MultiReceiver operations are used. The single-receiver ones are
+// deprecated — the integration guide calls using
+// shippingSynchronousSendMultiReceiver mandatory — and these cover one
+// receiver just as well.
+func multiRequest(o options, request wsdatachannel.SendRequest) wsdatachannel.MultiReceiverSendRequest {
+	multi := wsdatachannel.MultiReceiverSendRequest{
+		CompanyID:  request.CompanyID,
+		TypeID:     request.TypeID,
+		Receivers:  request.Receivers,
+		SenderName: o.senderName,
+		ExternalID: o.externalID,
+		Subject:    o.subject,
+		Language:   request.Language,
+	}
+	if request.FileContent != "" {
+		multi.Files = []wsdatachannel.BinaryContentItem{{
+			Name:    request.FileName,
+			Type:    request.FileType,
+			Content: request.FileContent,
+		}}
+	}
+	return multi
+}
+
+// sendOutcome flattens what the two send variants return, so the rest of the
+// command does not care which one ran.
+type sendOutcome struct {
+	results []wsdatachannel.RemmitanceResult
+	links   []wsdatachannel.ReceiverURL
+}
+
+// dispatch performs the send.
+//
+// Both the preview and the real send go through here. They used to build the
+// call separately, and drifted: the preview kept showing the deprecated
+// single-receiver operation after the send moved to the MultiReceiver one, so
+// the request it printed was not the request that would be sent. Routing both
+// through one function makes that impossible rather than merely fixed.
+func dispatch(ctx context.Context, client *wsdatachannel.Client, o options,
+	multi wsdatachannel.MultiReceiverSendRequest) (sendOutcome, error) {
+
+	var outcome sendOutcome
+
+	if o.sync {
+		results, err := client.ShippingSynchronousSendMultiReceiver(ctx, multi)
+		if err != nil {
+			return outcome, err
+		}
+		for _, r := range results {
+			outcome.results = append(outcome.results, r.RemmitanceResult)
+			outcome.links = append(outcome.links, r.Link...)
+		}
+		return outcome, nil
+	}
+
+	results, err := client.ShippingSendMultiReceiver(ctx, multi)
+	if err != nil {
+		return outcome, err
+	}
+	outcome.results = append(outcome.results, results...)
+	return outcome, nil
+}
+
 // captureEnvelope runs the real send through a transport that records the
 // request and answers locally, so the bytes shown are the bytes that would go
 // out — not a second rendering that might disagree with the first.
@@ -578,12 +645,7 @@ func captureEnvelope(o options, request wsdatachannel.SendRequest) (string, erro
 		return "", err
 	}
 
-	if o.sync {
-		_, err = client.ShippingSynchronousSend(context.Background(), request)
-	} else {
-		_, err = client.ShippingSend(context.Background(), request)
-	}
-	if err != nil {
+	if _, err := dispatch(context.Background(), client, o, multiRequest(o, request)); err != nil {
 		return "", err
 	}
 	return capture.body, nil
@@ -614,21 +676,57 @@ func (t *captureTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 	}, nil
 }
 
-// elideBase64 replaces the document payload with a placeholder. A base64 PDF is
+// elideBase64 replaces long base64 payloads with a placeholder. A document is
 // thousands of unreadable characters that would bury everything worth checking.
+//
+// It works on any element rather than a named one: the payload lives in
+// <FileContent> for the single-receiver operations and in <content> for the
+// MultiReceiver ones, and hunting for one name meant the other went through
+// unelided.
 func elideBase64(envelope string) string {
-	const open = "<FileContent xmlns=\"\">"
-	start := strings.Index(envelope, open)
-	if start < 0 {
-		return envelope
+	const threshold = 200
+
+	var b strings.Builder
+	for i := 0; i < len(envelope); {
+		open := strings.IndexByte(envelope[i:], '>')
+		if open < 0 {
+			b.WriteString(envelope[i:])
+			break
+		}
+		open += i
+		b.WriteString(envelope[i : open+1])
+
+		close := strings.IndexByte(envelope[open+1:], '<')
+		if close < 0 {
+			b.WriteString(envelope[open+1:])
+			break
+		}
+		close += open + 1
+
+		text := envelope[open+1 : close]
+		if len(text) >= threshold && isBase64(text) {
+			fmt.Fprintf(&b, "[%d base64 chars elided]", len(text))
+		} else {
+			b.WriteString(text)
+		}
+		i = close
 	}
-	end := strings.Index(envelope[start:], "</FileContent>")
-	if end < 0 {
-		return envelope
+	return b.String()
+}
+
+// isBase64 reports whether every byte could belong to base64 content,
+// whitespace included.
+func isBase64(s string) bool {
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch {
+		case c >= 'A' && c <= 'Z', c >= 'a' && c <= 'z', c >= '0' && c <= '9':
+		case c == '+', c == '/', c == '=', c == '\n', c == '\r':
+		default:
+			return false
+		}
 	}
-	payload := envelope[start+len(open) : start+end]
-	return replaceElement(envelope, "FileContent",
-		fmt.Sprintf("[%d base64 chars elided]", len(payload)))
+	return true
 }
 
 // redactPassword keeps the credential out of the terminal, and out of whatever

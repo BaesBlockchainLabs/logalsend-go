@@ -21,9 +21,18 @@ import (
 // Receiver is the addressee of a shipment.
 //
 // Every field is optional on the wire, and empty strings are omitted from the
-// request rather than sent as empty elements. Which fields are actually
-// required depends on the shipment type configured for your company: an
-// electronic notification needs an email, a postal one needs the street fields.
+// request rather than sent as empty elements. Which fields the portal actually
+// requires depends on how the shipment type is configured:
+//
+//   - electronic: ReceiverName, ReceiverMobile, ReceiverEmail,
+//     ReceiverIdentityID and ReceiverIdentityType
+//   - postal: ReceiverName, ReceiverStreet, ReceiverStreetNumber,
+//     ReceiverStreetType, ReceiverStreetNumberType, ReceiverStreetState,
+//     ReceiverStreetZip and ReceiverStreetCountry
+//
+// ExternalID is the exception to "set it anywhere": for a multi-signer
+// shipment the portal ignores it here and reads the one on the request. Set it
+// on the request and you are right either way.
 //
 // The fields are declared in the order the Axis stub's type descriptor lists
 // them — alphabetical, not logical — because that is the order the elements go
@@ -34,8 +43,16 @@ type Receiver struct {
 	// status responses so you can correlate them.
 	ExternalID string `xml:"externalId,omitempty"`
 
-	ReceiverCommentAtt       string `xml:"receiverCommentAtt,omitempty"`
-	ReceiverEmail            string `xml:"receiverEmail,omitempty"`
+	ReceiverCommentAtt string `xml:"receiverCommentAtt,omitempty"`
+	ReceiverEmail      string `xml:"receiverEmail,omitempty"`
+
+	// ReceiverEmailCC copies a second address on the notification. The
+	// integration guide (4.1.0) documents it, but the Axis stubs in SDK 3.9.0
+	// do not declare it, so its position in the sequence is inferred from the
+	// alphabetical order the other fields follow. It is omitted unless set, so
+	// leaving it empty cannot change a request that works today.
+	ReceiverEmailCC string `xml:"receiverEmailCC,omitempty"`
+
 	ReceiverIdentityID       string `xml:"receiverIdentityId,omitempty"`
 	ReceiverIdentityType     string `xml:"receiverIdentityType,omitempty"`
 	ReceiverLastName1        string `xml:"receiverLastName1,omitempty"`
@@ -131,9 +148,17 @@ type RemmitanceResult struct {
 // Err turns a non-zero RetCode into an error. The Java SDK leaves callers to
 // check the code themselves; this is a convenience, not a change of behaviour,
 // since the result is still returned in full.
+//
+// The error carries the guide's own wording for the code when it has one, since
+// the portal's Message is sometimes only "Validation Request Error" and the
+// code is the part that says what went wrong.
 func (r RemmitanceResult) Err() error {
-	if r.RetCode == 0 {
+	if r.RetCode == RetCodeOK {
 		return nil
+	}
+	if name := RetCodeName(r.RetCode); name != "" {
+		return fmt.Errorf("wsdatachannel: shipment rejected with code %d (%s): %s",
+			r.RetCode, name, r.Message)
 	}
 	return fmt.Errorf("wsdatachannel: shipment rejected with code %d: %s", r.RetCode, r.Message)
 }
