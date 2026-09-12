@@ -260,11 +260,24 @@ which is the narrative record of what happened and is often the only artefact a
 non-signing flow leaves behind.
 
 Two caveats on this table. The service list is the one offered by the demo
-portal, so yours may differ. And the mapping is inferred from the service names
-and from which download operations the SDK exposes — only the
-identity-validation row has been confirmed against a real shipment. The
-difference between `Contratación` and `Contratación Express` in particular is
-not documented here because it is not known; ask Logalty.
+portal, so yours may differ. And most of the mapping is inferred from the
+service names and from which download operations the SDK exposes — the
+`Contratación` and identity-validation rows are the two confirmed against real
+shipments. A signed contract yielded `signed`, `stamped`, `original`,
+`certificate`, `certificate-xml` and `evidence-pack`, and nothing else; the
+identity-only artefacts came back empty, and vice versa. The difference between
+`Contratación` and `Contratación Express` is not documented here because it is
+not known; ask Logalty.
+
+Two things worth knowing about a finished contract. `DocumentSigned` and
+`DocumentStamped` return the same bytes — another alias pair, like
+`DocumentLogaltyCertificate` and `DocumentIdentificationOCRCertificate` in the
+identity flow. And `DocumentOriginal` returns the file you uploaded, byte for
+byte, which makes it a cheap way to prove what was actually signed.
+
+The signed PDF carries a real PDF signature: `/Sig`, a `/ByteRange` and an
+`/AcroForm` holding the signature field. That is also why the portal refuses an
+AcroForm on the way in — it adds its own.
 - **Status does not update instantly.** A receiver's action can take tens of
   minutes to appear. `LastUpdate` staying equal to `SendDate` means "nothing
   recorded *yet*", not "nothing happened" — do not infer failure from it.
@@ -314,6 +327,41 @@ for you:
 
 `lgtsend -attrs <guid>` prints all of this. Everything it prints is personal
 data about the subject, so it goes to stdout and belongs nowhere near a log.
+
+### Verifying a certificate offline
+
+The XML certificates the portal issues are XMLDSig-signed, so `xmldsig.Verify`
+can check one without contacting anybody:
+
+```go
+verified, err := xmldsig.Verify(certificateXML)
+if err != nil {
+    return err   // altered, or signed by nobody we can see
+}
+fmt.Println("signed by", verified.Certificate.Subject)
+```
+
+It checks both halves, because only one of them is not worth much: the
+reference digest proves the content is what was signed, and the signature
+proves that digest came from the certificate holder. It returns the signer's
+certificate but does not judge it — check the issuer and the dates yourself.
+
+Supported: inclusive Canonical XML 1.0, a single whole-document reference with
+the enveloped-signature transform, RSA with SHA-1 or SHA-256. Anything else is
+an error rather than a pass. In particular it does **not** handle XAdES
+signatures with ID-based references, which is what the identity flow's
+`idcard_nfcsigned_result` artefact uses.
+
+> **One finding to take up with Logalty.** The contract flow's
+> `certificate-xml` did not verify for us — and Apache Santuario, the reference
+> implementation, rejects it too, with `signature INVALID` and
+> `reference MISMATCH`. We tried all twelve canonicalization variants Santuario
+> offers against the declared `DigestValue` and none matched, so the document as
+> delivered is not the document that was signed. Our canonicalizer is not the
+> problem: on that same file it produces output byte-for-byte identical to
+> Santuario's, all 11,847 bytes of it. Something appears to change between
+> signing and delivery. A certificate that cannot be verified offline is worth
+> asking about, since that is much of what it is for.
 
 ### Status and result codes
 
