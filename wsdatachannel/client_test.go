@@ -588,3 +588,54 @@ func TestTimeLayouts(t *testing.T) {
 		t.Error("an unparseable value should report an error, not pass silently")
 	}
 }
+
+// TestDecodeDocumentedSyncMultiResponse decodes the response printed in section
+// 5.5 of the integration guide, verbatim. It guards the type relationships that
+// a synchronous contract send depends on: the outcome fields come from the
+// embedded remmitanceResult, and one result carries a link per signer.
+func TestDecodeDocumentedSyncMultiResponse(t *testing.T) {
+	const response = `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+   <soap:Body>
+      <ns2:shippingSynchronousSendMultiReceiverResponse xmlns:ns2="https://sender.logalty.net/lgtportal/wsDataChannel">
+         <result>
+            <documents externalId="1111" guid="001001-9996-000000001323970.par" id="83610" result="0" resultComment="" status="1" statusComment="Saved" typeid="12777"/>
+            <retCode>0</retCode>
+            <link>
+               <receiver>11111111H</receiver>
+               <url>https://example/a</url>
+            </link>
+            <link>
+               <receiver>22222222H</receiver>
+               <url>https://example/b</url>
+            </link>
+         </result>
+      </ns2:shippingSynchronousSendMultiReceiverResponse>
+   </soap:Body>
+</soap:Envelope>`
+
+	r := newRecorder(t, response)
+	results, err := r.client(t).ShippingSynchronousSendMultiReceiver(
+		context.Background(), MultiReceiverSendRequest{CompanyID: "1", TypeID: "1"})
+	if err != nil {
+		t.Fatalf("call: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("got %d results, want 1", len(results))
+	}
+	got := results[0]
+	if got.RetCode != RetCodeOK {
+		t.Errorf("RetCode = %d", got.RetCode)
+	}
+	if err := got.Err(); err != nil {
+		t.Errorf("Err() = %v, want nil", err)
+	}
+	if len(got.Documents) != 1 || got.Documents[0].GUID != "001001-9996-000000001323970.par" {
+		t.Errorf("documents decoded wrong: %+v", got.Documents)
+	}
+	if got.Documents[0].Status != StatusPendingSend {
+		t.Errorf("status = %d, want %d", got.Documents[0].Status, StatusPendingSend)
+	}
+	if len(got.Link) != 2 || got.Link[1].Receiver != "22222222H" {
+		t.Errorf("links decoded wrong: %+v", got.Link)
+	}
+}

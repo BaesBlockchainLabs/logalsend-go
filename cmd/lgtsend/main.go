@@ -454,6 +454,13 @@ func send(ctx context.Context, client *wsdatachannel.Client, o options) error {
 	if err != nil {
 		return err
 	}
+	// A send that reports nothing is not a success. The shipment may well have
+	// been created — check the portal before retrying, or you will create a
+	// second one.
+	if len(outcome.results) == 0 {
+		return errors.New("the portal accepted the request but returned no result; " +
+			"check whether the shipment exists before sending again, and re-run with -debug")
+	}
 
 	var guid string
 	for _, result := range outcome.results {
