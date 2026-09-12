@@ -352,16 +352,48 @@ an error rather than a pass. In particular it does **not** handle XAdES
 signatures with ID-based references, which is what the identity flow's
 `idcard_nfcsigned_result` artefact uses.
 
-> **One finding to take up with Logalty.** The contract flow's
-> `certificate-xml` did not verify for us — and Apache Santuario, the reference
-> implementation, rejects it too, with `signature INVALID` and
-> `reference MISMATCH`. We tried all twelve canonicalization variants Santuario
-> offers against the declared `DigestValue` and none matched, so the document as
-> delivered is not the document that was signed. Our canonicalizer is not the
-> problem: on that same file it produces output byte-for-byte identical to
-> Santuario's, all 11,847 bytes of it. Something appears to change between
-> signing and delivery. A certificate that cannot be verified offline is worth
-> asking about, since that is much of what it is for.
+### What is actually signed, and how
+
+The evidentiary chain lives in the PDFs, and it holds up. Verified with OpenSSL
+on a real signed contract:
+
+| Artefact | Signature |
+|---|---|
+| `DocumentLogaltyCertificate` | PAdES (`ETSI.CAdES.detached`) — **verifies** |
+| `DocumentSigned` / `DocumentStamped` | PAdES, **plus** an RFC 3161 document timestamp — both **verify** |
+| `DocumentEvidencePack` | unsigned |
+| `DocumentOriginal` | unsigned; it is your own upload, returned byte for byte |
+
+The signer is `CN=DEMO - Logalty Core` (LOGALTY PRUEBA POR INTERPOSICION SL,
+`VATES-B84492891`), under **AC Firmaprofesional - CUALIFICADOS**, a qualified
+CA. The timestamp's message imprint is exactly the SHA-256 of the byte range it
+covers. Note that the signature maths and the issuer were checked, but not the
+chain up to a trust anchor — do that yourself before relying on it.
+
+Extracting a PAdES signature to verify it takes two steps: read the
+`/ByteRange`, concatenate the two segments it names, and pull the CMS blob out
+of the hex string in the gap between them. Then:
+
+```sh
+openssl cms -verify -inform DER -in signature.der -content signed.bin -binary
+```
+
+An `ETSI.RFC3161` entry is a timestamp token, not a detached signature over
+those bytes — verifying it the same way fails, and that failure means nothing.
+Check it with `openssl ts -reply -token_in -text` and compare its message
+imprint against the digest of the byte range.
+
+> **A smaller finding, still worth raising with Logalty.** The contract's
+> `certificate-xml` does not verify. Apache Santuario rejects it too —
+> `signature INVALID`, `reference MISMATCH` — and none of the twelve
+> canonicalization variants Santuario offers reproduces the declared
+> `DigestValue`, so the document as delivered is not the document that was
+> signed. This is not our canonicalizer: on that same file it produces output
+> byte-for-byte identical to Santuario's, all 11,847 bytes. Since the PDF
+> certificate above *does* verify and is the artefact with legal weight, this
+> looks like a defect in the XML convenience copy rather than a hole in the
+> evidence. Do not build verification on `certificate-xml` until they confirm
+> it; verify the PDF instead.
 
 ### Status and result codes
 
